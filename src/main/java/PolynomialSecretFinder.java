@@ -1,4 +1,7 @@
 import java.io.FileReader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -7,30 +10,39 @@ public class PolynomialSecretFinder {
 
   static class Point {
     int x;
-    long y;
+    BigInteger y;
 
-    Point(int x, long y) {
+    Point(int x, BigInteger y) {
       this.x = x;
       this.y = y;
     }
   }
 
-  public static double lagrangeInterpolationAtZero(List<Point> points, int k) {
-    double result = 0.0;
+  // Lagrange interpolation at x = 0
+  public static BigDecimal lagrangeInterpolationAtZero(List<Point> points, int k) {
+    MathContext mc = new MathContext(30);
+    BigDecimal result = BigDecimal.ZERO;
+
     for (int i = 0; i < k; i++) {
-      double term = points.get(i).y;
+      BigDecimal term = new BigDecimal(points.get(i).y);
+      int xi = points.get(i).x;
+
       for (int j = 0; j < k; j++) {
         if (i != j) {
-          term *= (0.0 - points.get(j).x) / (points.get(i).x - points.get(j).x);
+          int xj = points.get(j).x;
+          BigDecimal num = BigDecimal.ZERO.subtract(BigDecimal.valueOf(xj));
+          BigDecimal den = BigDecimal.valueOf(xi - xj);
+          term = term.multiply(num.divide(den, mc), mc);
         }
       }
-      result += term;
+
+      result = result.add(term, mc);
     }
+
     return result;
   }
 
-  public static void main(String[] args) {
-    String filename = "input.json";
+  public static void processFile(String filename, int testCaseNumber) {
     List<Point> pointList = new ArrayList<>();
     int k = 0;
 
@@ -49,23 +61,29 @@ public class PolynomialSecretFinder {
         JSONObject valueObj = (JSONObject) obj.get(key);
         int base = Integer.parseInt(valueObj.get("base").toString());
         String encodedY = valueObj.get("value").toString();
-        long y = Long.parseLong(encodedY, base);
+        BigInteger y = new BigInteger(encodedY, base);
         pointList.add(new Point(x, y));
       }
 
     } catch (Exception e) {
-      System.err.println("Error parsing JSON: " + e.getMessage());
+      System.err.println("Error parsing " + filename + ": " + e.getMessage());
       return;
     }
 
     pointList.sort(Comparator.comparingInt(p -> p.x));
     if (pointList.size() < k) {
-      System.out.println("Not enough points for interpolation.");
+      System.out.println("Test Case " + testCaseNumber + ": Not enough points for interpolation.");
       return;
     }
 
     List<Point> selected = pointList.subList(0, k);
-    double c = lagrangeInterpolationAtZero(selected, k);
-    System.out.printf("The constant term (secret c) is: %.0f\n", c);
+    BigDecimal c = lagrangeInterpolationAtZero(selected, k);
+
+    System.out.printf("Test Case %d - The constant term (secret c) is: %.0f\n", testCaseNumber, c);
+  }
+
+  public static void main(String[] args) {
+    processFile("input1.json", 1);
+    processFile("input2.json", 2);
   }
 }
