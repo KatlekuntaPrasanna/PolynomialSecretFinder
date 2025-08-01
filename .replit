@@ -1,6 +1,6 @@
 compile = "javac -classpath .:target/dependency/* -d . $(find . -type f -name '*.java')"
-run = "java -classpath .:target/dependency/* Main"
-entrypoint = "src/main/java/Main.java"
+run = "java -classpath .:target/dependency/* PolynomialSecretFinder"
+entrypoint = "src/main/java/PolynomialSecretFinder.java"
 hidden = ["**/*.class"]
 
 [packager]
@@ -56,9 +56,25 @@ type = "request"
 
 [debugger.interactive.launchMessage.arguments]
 classPaths = ["."]
-mainClass = "Main"
+mainClass = "PolynomialSecretFinder"
 
 [deployment]
 build = ["javac", "-classpath", ".:target/dependency/*", "-d", ".", "$(find . -type f -name '*.java')"]
-run = ["java", "-classpath", ".:target/dependency/*", "Main"]
+run = ["java", "-classpath", ".:target/dependency/*", "PolynomialSecretFinder"]
 deploymentTarget = "cloudrun"
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 45826819
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "javac -classpath .:target/dependency/* -d . $(find . -type f -name '*.java')"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "java -classpath .:target/dependency/* PolynomialSecretFinder"
